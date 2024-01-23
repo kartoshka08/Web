@@ -19,20 +19,26 @@ public class RequestProcessor {
 
             final var requestLine = in.readLine();
             final var parts = requestLine.split(" ");
-            if (parts.length != 3){return;}
+            if (parts.length != 3){
+                responseContent(out, 404, "Bad Request");
+                return;
+            }
 
             String method = parts[0];
+            if(method == null || method.isBlank()){
+                responseContent(out, 404, "Bad Request");
+                return;
+            }
             final var path = parts[1];
-            Request request = createRequest(method, path);
+            Request request = new Request(method, path);
 
-            if(request == null || !handlers.containsKey(request.getMethod())){
+            if(!handlers.containsKey(request.getMethod())){
                 responseContent(out, 404, "Bad Request");
                 return;
             }
 
             Map<String, Handler> handlerMap = handlers.get(request.getMethod());
             String requestPath = request.getPath();
-            System.out.println(handlerMap);
             if (handlerMap.containsKey(requestPath)){
                 Handler handler = handlerMap.get(requestPath);
                 handler.handle(request, out);
@@ -42,11 +48,6 @@ public class RequestProcessor {
         }catch (IOException e){
             throw new RuntimeException(e);
         }
-    }
-    private static Request createRequest(String method, String path){
-        if(method != null && !method.isBlank()){
-            return new Request(method, path);
-        }else {return null;}
     }
 
     public static void responseContent(BufferedOutputStream out, int responseCode, String responseStatus) throws IOException {
